@@ -1,2 +1,2 @@
 # DecorRater
-A rater of decoration level from images of houses.
+A rater of house internal decoration based on images.
