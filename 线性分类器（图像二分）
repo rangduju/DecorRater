@@ -1,0 +1,142 @@
+import itertools
+import numpy as np;
+from matplotlib import pyplot as plt;
+import pandas as pd;
+
+    
+data=[[1 ,-1,	-1,		-1,	1],
+[-1,	-1,	-1,		1	,1],
+[-1	,1	,-1	,-1,	1],
+[1	,-1,	-1,		1,	1],
+[-1,	-1,	-1,		1,	1],
+[1,	1	,1,		-1,	1],
+[1,	1,	1,		-1,	1],
+[1	,1	,-1,		-1,	1],
+[1,	1	,-1,		-1,	1],
+[1,	-1,	-1,		1,	1],
+[-1,	1	,-1,		-1,	1],
+[1,	-1,	-1,		-1,	1],
+[1,	1	,1	,	-1,	1],
+[1,	1,	-1,		1,	1],
+[-1,	-1,	-1,		-1,	1],
+[-1,	1	,-1,		-1,	1],
+[-1,	-1,	-1,		-1,	1],
+[1,	1,	1,		1,	1],
+[1	,-1,	-1,		1,	1],
+[-1,	1	,-1,		-1,	1],
+[1,	-1,	-1,		-1,	-1],
+[-1	,1,	-1,		-1,	-1],
+[-1	,1	,-1	,-1,	-1],
+[-1	,-1	,-1,		-1,	-1],
+[1,	1	,-1	,-1	,-1],
+[-1,	-1,	-1,		-1,	-1],
+[1	,-1,	-1		,-1	,-1],
+[-1	,-1,	-1,		-1,	-1],
+[1	,-1	,1,		-1,	-1],
+[1	,-1	,-1,		-1,	-1],
+[-1	,-1	,-1	,-1	,-1],
+[-1	,-1,	-1,		-1,	-1],
+[-1	,-1	,-1	,-1	,-1],
+[-1	,-1,	-1,		-1,	-1],
+[-1	,-1	,-1,		-1	,-1],
+[1,	1,	1	,	1	,-1],
+[-1	,-1,	1,		-1	,-1],
+[-1	,-1,	-1,		-1,	-1],
+[-1,	-1,	-1		,-1	,-1],
+[-1	,-1	,-1		,1	,-1],
+]
+#cls是主管房屋装修质量好/不好
+#data是关于图片信息的数据集，x一阶差分，x二阶差分，y一阶差分，y二阶差分，以及滤波后整体的二维互熵，将这些一维数组输出成熵的形式，便形成了一阶、二阶信息熵
+df=pd.DataFrame(data,columns=['x','y','z','m','n','cls'])
+
+'''
+df=pd.read_csv('1.csv')
+'''
+def plot_class(df,cls_name='cls'):
+    marker=itertools.cycle(('ovspP*H+3XD'))
+    cls_values=df[cls_name].unique()
+    cls_values.sort()
+    for item in cls_values:
+        plt.scatter(df[df[cls_name]==item].x,df[df[cls_name]==item].y,label=item,marker=next(marker))
+    plt.axis('equal')
+    plt.legend()
+    
+def update_w(w,x,c,eta):
+    h=np.sign(w.dot(x))
+    return w+eta*(c-h)*x
+
+def row_to_input(idx):
+    row=df.iloc[idx].values
+    c=row[-1]
+    x=np.hstack((1,row[:-1]))
+    return x,c
+
+def linear_cls_one_round(df,w,eta):
+    row_idx=list(range(len(df)))
+    np.random.shuffle(row_idx)
+    for i in row_idx:
+        x,c=row_to_input(i)
+        w=update_w(w,x,c,eta)
+    return w
+    
+def df_to_linear_cls(df,w):
+    df1=df.copy()
+    df1.cls=np.sign(df.x*w[1]+df.y*w[2]+w[0]+df.z*w[3]+df.n*w[4])
+    return df1
+
+def plot_linear_cls(df,w):
+    df1=df_to_linear_cls(df,w)
+    plot_class(df1)
+    line_x=np.array([df.x.min(),df.x.max()])
+    line_y=(w[0]+w[1]*line_x/(-w[2]))
+    plt.plot(line_x,line_y)
+    
+    
+    
+    
+w=np.random.random(4+1)
+eta=0.001
+plot_linear_cls(df,w)
+
+w2=w.copy()
+
+for i in range(20):
+    w=linear_cls_one_round(df,w,eta)
+    distance=(w2-w).dot(w2-w)
+    print(i,distance)
+    if distance<1.0e-5:
+        print('---%次收敛---'%i)
+        break
+    w2=w.copy()
+    plt.figure()
+    plot_linear_cls(df,w)
+    
+    
+    
+    
+ 
+
+truenumber=0
+result=df.dot(w)
+for i in range(39):
+    if df>0:
+        if i<20:
+            truenumber=truenumber+1
+    if df<0:
+        if i>20:
+            truenumber=truenumber+1
+print(truenumber/40)           
+    
+
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
